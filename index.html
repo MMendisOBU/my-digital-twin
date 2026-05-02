@@ -10,12 +10,32 @@
     </style>
 </head>
 <body>
+<script>
+    const modelViewer = document.querySelector('model-viewer');
 
-    <model-viewer 
-        src="NHHB 1.01 3D for github.glb" 
-        camera-controls  
-        shadow-intensity="1">
-    </model-viewer>
+    window.addEventListener("message", (event) => {
+        if (event.data.action === 'update_air_quality') {
+            const co2 = event.data.value;
+            const materials = modelViewer.model.materials;
+            
+            // Logic: 
+            // Below 500 = Green (Good)
+            // 500 to 800 = Yellow (Warning)
+            // Above 800 = Red (Bad)
+            let color = [0, 1, 0, 1]; // Default Green
+            if (co2 > 800) {
+                color = [1, 0, 0, 1]; // Red
+            } else if (co2 > 500) {
+                color = [1, 0.8, 0, 1]; // Yellow/Orange
+            }
 
-</body>
-</html>
+            materials.forEach(mat => {
+                // Let's target the "Floor" or "Walls" to show room air quality
+                // Change 'Floor' to match your Revit material name
+                if (mat.name.toLowerCase().includes('floor') || mat.name.toLowerCase().includes('wall')) {
+                    mat.pbrMetallicRoughness.setBaseColorFactor(color);
+                }
+            });
+        }
+    }, false);
+</script>
