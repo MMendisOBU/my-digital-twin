@@ -1,40 +1,41 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <title>My Digital Twin</title>
     <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.4.0/model-viewer.min.js"></script>
     <style>
-        body { margin: 0; background-color: #1a1a1a; }
+        /* Changed to white to help troubleshoot the black screen */
+        body { margin: 0; background-color: #ffffff; } 
         model-viewer { width: 100vw; height: 100vh; }
     </style>
 </head>
 <body>
-<script>
-    const modelViewer = document.querySelector('model-viewer');
 
-    window.addEventListener("message", (event) => {
-        if (event.data.action === 'color_update') {
-            // We wait for the model to be ready
-            if (!modelViewer.model) return; 
+    <model-viewer 
+        id="twin-model"
+        src="NHHB 1.01 3D for github.glb" 
+        camera-controls 
+        shadow-intensity="1">
+    </model-viewer>
 
-            const materials = modelViewer.model.materials;
-            const colorMap = {
-                'GREEN': [0, 1, 0, 1],
-                'YELLOW': [1, 0.8, 0, 1],
-                'RED': [1, 0, 0, 1]
-            };
+    <script>
+        const modelViewer = document.querySelector('#twin-model');
 
-            const chosenColor = colorMap[event.data.colorName] || [0.5, 0.5, 0.5, 1];
+        window.addEventListener("message", (event) => {
+            if (event.data.action === 'color_update' && modelViewer.model) {
+                const materials = modelViewer.model.materials;
+                const colorMap = {
+                    'GREEN': [0, 1, 0, 1],
+                    'YELLOW': [1, 0.8, 0, 1],
+                    'RED': [1, 0, 0, 1]
+                };
+                const chosenColor = colorMap[event.data.colorName] || [0.5, 0.5, 0.5, 1];
 
-            // This tells the model: "Paint EVERYTHING that looks like a floor or wall"
-            materials.forEach(mat => {
-                // This is a 'catch-all'. It looks for common Revit material names.
-                const name = mat.name.toLowerCase();
-                if (name.includes('floor') || name.includes('wall') || name.includes('generic')) {
+                materials.forEach(mat => {
+                    // This colors EVERYTHING temporarily to prove it works
                     mat.pbrMetallicRoughness.setBaseColorFactor(chosenColor);
-                }
-            });
-        }
-    }, false);
-</script>
+                });
+            }
+        }, false);
+    </script>
+</body>
+</html>
