@@ -15,9 +15,10 @@
 
     window.addEventListener("message", (event) => {
         if (event.data.action === 'color_update') {
+            // We wait for the model to be ready
+            if (!modelViewer.model) return; 
+
             const materials = modelViewer.model.materials;
-            
-            // Map the text from Supabase to 3D colors [R, G, B, A]
             const colorMap = {
                 'GREEN': [0, 1, 0, 1],
                 'YELLOW': [1, 0.8, 0, 1],
@@ -26,9 +27,11 @@
 
             const chosenColor = colorMap[event.data.colorName] || [0.5, 0.5, 0.5, 1];
 
+            // This tells the model: "Paint EVERYTHING that looks like a floor or wall"
             materials.forEach(mat => {
-                // This will color the floor or walls to show the room status
-                if (mat.name.toLowerCase().includes('floor') || mat.name.toLowerCase().includes('wall')) {
+                // This is a 'catch-all'. It looks for common Revit material names.
+                const name = mat.name.toLowerCase();
+                if (name.includes('floor') || name.includes('wall') || name.includes('generic')) {
                     mat.pbrMetallicRoughness.setBaseColorFactor(chosenColor);
                 }
             });
