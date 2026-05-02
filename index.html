@@ -14,26 +14,22 @@
     const modelViewer = document.querySelector('model-viewer');
 
     window.addEventListener("message", (event) => {
-        if (event.data.action === 'update_air_quality') {
-            const co2 = event.data.value;
+        if (event.data.action === 'color_update') {
             const materials = modelViewer.model.materials;
             
-            // Logic: 
-            // Below 500 = Green (Good)
-            // 500 to 800 = Yellow (Warning)
-            // Above 800 = Red (Bad)
-            let color = [0, 1, 0, 1]; // Default Green
-            if (co2 > 800) {
-                color = [1, 0, 0, 1]; // Red
-            } else if (co2 > 500) {
-                color = [1, 0.8, 0, 1]; // Yellow/Orange
-            }
+            // Map the text from Supabase to 3D colors [R, G, B, A]
+            const colorMap = {
+                'GREEN': [0, 1, 0, 1],
+                'YELLOW': [1, 0.8, 0, 1],
+                'RED': [1, 0, 0, 1]
+            };
+
+            const chosenColor = colorMap[event.data.colorName] || [0.5, 0.5, 0.5, 1];
 
             materials.forEach(mat => {
-                // Let's target the "Floor" or "Walls" to show room air quality
-                // Change 'Floor' to match your Revit material name
+                // This will color the floor or walls to show the room status
                 if (mat.name.toLowerCase().includes('floor') || mat.name.toLowerCase().includes('wall')) {
-                    mat.pbrMetallicRoughness.setBaseColorFactor(color);
+                    mat.pbrMetallicRoughness.setBaseColorFactor(chosenColor);
                 }
             });
         }
