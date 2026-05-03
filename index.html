@@ -1,27 +1,29 @@
 <!DOCTYPE html>
 <html>
 <head>
+    <title>My Digital Twin</title>
     <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.4.0/model-viewer.min.js"></script>
-    <style>
-        /* Changed to white to help troubleshoot the black screen */
-        body { margin: 0; background-color: #ffffff; } 
-        model-viewer { width: 100vw; height: 100vh; }
-    </style>
 </head>
 <body>
-const viewer = document.querySelector('#twin-model');
 
-// This makes the 3D model "clickable"
-viewer.addEventListener('click', (event) => {
-    // This looks through the 3D space to see what your mouse hit
-    const hit = viewer.materialFromPoint(event.clientX, event.clientY);
-    
-    if (hit) {
-        // This creates a simple text box on your screen showing the data
-        const dataFound = hit.name || "No Name Found";
-        alert("Object Detected! Internal Name: " + dataFound);
-    } else {
-        console.log("You clicked the background.");
-    }
-});
+    <model-viewer id="twin-model" src="your-model.glb" ar camera-controls touch-action="pan-y" style="width: 100%; height: 500px;">
+    </model-viewer>
+
+    <script>
+        const viewer = document.querySelector('#twin-model');
+
+        viewer.addEventListener('load', () => {
+            console.log("Model loaded successfully!");
+        });
+
+        viewer.addEventListener('click', (event) => {
+            const hit = viewer.materialFromPoint(event.clientX, event.clientY);
+            if (hit) {
+                // This will finally show you the metadata!
+                alert("Object Detected! Internal Name: " + hit.name);
+            }
+        });
+    </script>
+
+</body>
 </html>
