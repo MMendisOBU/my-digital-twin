@@ -30,14 +30,22 @@
     src="model.glb" 
     camera-controls 
     touch-action="pan-y"
-    camera-target="auto auto auto"
     
-    /* This part stops the flipping */
+    /* 1. STOPS THE FLIPPING: Limits vertical movement so you can't go under the floor */
     min-camera-orbit="auto 0deg auto" 
     max-camera-orbit="auto 90deg auto" 
 
+    /* 2. FIXES THE CENTER: Ensures the building stays flat on the grid */
+    camera-target="0m 0m 0m"
+    
+    /* 3. ADDS STABILITY: Makes the movement feel heavy and professional */
     interpolation-decay="200"
-    shadow-intensity="1">
+    shadow-intensity="1"
+    
+    /* 4. OPTIONAL: Adds a floor shadow so it looks like it is sitting on a surface */
+    shadow-softness="1">
+
+    </model-viewer>
 
         <button class="Hotspot" slot="hotspot-1" data-position="61.09183340064659m 226.4628581160205m 353.7156419179308m" data-normal="-1m 0m 0m">
             <div id="data-a81758fffe0d6f08" class="HotspotAnnotation">ID: ...6f08<br><b>Loading Data...</b></div>
