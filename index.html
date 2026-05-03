@@ -1,72 +1,61 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
     <meta charset="UTF-8">
+    <title>Digital Twin Dashboard</title>
     <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.4.0/model-viewer.min.js"></script>
+    <style>
+        body { margin: 0; background-color: #f4f4f4; }
+        model-viewer { width: 100%; height: 98vh; }
+        
+        /* Styles the data bubbles */
+        .HotspotAnnotation {
+            background: #ffffff;
+            border: 2px solid #007bff;
+            border-radius: 6px;
+            padding: 8px 12px;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-size: 13px;
+            color: #333;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+    </style>
 </head>
-<body style="margin: 0;">
+<body>
 
     <model-viewer 
-        id="twin-model" 
         src="model.glb" 
         camera-controls 
-        style="width: 100%; height: 100vh;">
+        camera-target="auto auto auto" 
+        shadow-intensity="1" 
+        ar 
+        ar-modes="webxr scene-viewer quick-look">
+
+        <button class="Hotspot" slot="hotspot-1" 
+                data-position="61.09183340064659m 226.4628581160205m 353.7156419179308m" 
+                data-normal="-1m 0m 0m">
+            <div id="data-a81758fffe0d6f08" class="HotspotAnnotation">
+                ID: ...6f08 <br> <b>Loading Data...</b>
+            </div>
+        </button>
+
+        <button class="Hotspot" slot="hotspot-2" 
+                data-position="85.35421807809544m 242.5540850221417m 350.9062363462293m" 
+                data-normal="-1m 0m 0m">
+            <div id="data-a81758fffe0d6f2f" class="HotspotAnnotation">
+                ID: ...6f2f <br> <b>Loading Data...</b>
+            </div>
+        </button>
+
+        <button class="Hotspot" slot="hotspot-3" 
+                data-position="38.266051880778825m 240.2209602488366m 355.46939304757063m" 
+                data-normal="0m 0m 1m">
+            <div id="data-a81758fffe0d985c" class="HotspotAnnotation">
+                ID: ...985c <br> <b>Loading Data...</b>
+            </div>
+        </button>
+
     </model-viewer>
 
-    <script>
-        const viewer = document.querySelector('#twin-model');
-        
-        // This will pop up the name when you click a chair
-        viewer.addEventListener('click', (event) => {
-            const hit = viewer.materialFromPoint(event.clientX, event.clientY);
-            if (hit) {
-                alert("Internal Name: " + hit.name);
-            }
-        });
-
-        // Listen for Grafana/Supabase data
-        window.addEventListener("message", (event) => {
-            if (event.data.action === 'color_update') {
-                const materials = viewer.model.materials;
-                const colorMap = {
-                    'GREEN': [0, 1, 0, 1],
-                    'YELLOW': [1, 0.8, 0, 1],
-                    'RED': [1, 0, 0, 1]
-                };
-                const chosenColor = colorMap[event.data.colorName] || [0.5, 0.5, 0.5, 1];
-
-                materials.forEach(mat => {
-                    // This searches for the chair materials
-                    if (mat.name.toLowerCase().includes('chair') || mat.name.toLowerCase().includes('fabric')) {
-                        mat.pbrMetallicRoughness.setBaseColorFactor(chosenColor);
-                    }
-                });
-            }
-        }, false);
-    </script>
-    const viewer = document.querySelector('#twin-model');
-
-viewer.addEventListener('load', () => {
-    // This looks at the RAW data structure, not just the visual materials
-    const scene = viewer.model.shapes; 
-    console.log("Deep Model Data:", viewer.model);
-    
-    // This logs every single internal ID to your console (F12)
-    viewer.model.materials.forEach((mat, index) => {
-        console.log(`Material ${index}: ${mat.name}`);
-    });
-});
-
-viewer.addEventListener('click', (event) => {
-    // This is the "Magic" function for BIM
-    const hit = viewer.materialFromPoint(event.clientX, event.clientY);
-    
-    if (hit) {
-        // We probe the 'backing' object for hidden IFC data
-        const deepData = hit.variantInfo || "No extra BIM data visible to this viewer";
-        alert("Surface Name: " + hit.name + "\nCheck Console (F12) for hidden IFC IDs!");
-        console.log("Clicked Object Raw Data:", hit);
-    }
-});
 </body>
 </html>
