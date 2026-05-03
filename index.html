@@ -9,33 +9,19 @@
     </style>
 </head>
 <body>
+const viewer = document.querySelector('#twin-model');
 
-    <model-viewer 
-        id="twin-model"
-        src="NHHB 1.01 3D for github.glb" 
-        camera-controls 
-        shadow-intensity="1">
-    </model-viewer>
-
-    <script>
-        const modelViewer = document.querySelector('#twin-model');
-
-        window.addEventListener("message", (event) => {
-            if (event.data.action === 'color_update' && modelViewer.model) {
-                const materials = modelViewer.model.materials;
-                const colorMap = {
-                    'GREEN': [0, 1, 0, 1],
-                    'YELLOW': [1, 0.8, 0, 1],
-                    'RED': [1, 0, 0, 1]
-                };
-                const chosenColor = colorMap[event.data.colorName] || [0.5, 0.5, 0.5, 1];
-
-                materials.forEach(mat => {
-                    // This colors EVERYTHING temporarily to prove it works
-                    mat.pbrMetallicRoughness.setBaseColorFactor(chosenColor);
-                });
-            }
-        }, false);
-    </script>
-</body>
+// This makes the 3D model "clickable"
+viewer.addEventListener('click', (event) => {
+    // This looks through the 3D space to see what your mouse hit
+    const hit = viewer.materialFromPoint(event.clientX, event.clientY);
+    
+    if (hit) {
+        // This creates a simple text box on your screen showing the data
+        const dataFound = hit.name || "No Name Found";
+        alert("Object Detected! Internal Name: " + dataFound);
+    } else {
+        console.log("You clicked the background.");
+    }
+});
 </html>
