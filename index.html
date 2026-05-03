@@ -1,29 +1,48 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>My Digital Twin</title>
+    <meta charset="UTF-8">
     <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.4.0/model-viewer.min.js"></script>
 </head>
-<body>
+<body style="margin: 0;">
 
-    <model-viewer id="twin-model" src="your-model.glb" ar camera-controls touch-action="pan-y" style="width: 100%; height: 500px;">
+    <model-viewer 
+        id="twin-model" 
+        src="model.glb" 
+        camera-controls 
+        style="width: 100%; height: 100vh;">
     </model-viewer>
 
     <script>
         const viewer = document.querySelector('#twin-model');
-
-        viewer.addEventListener('load', () => {
-            console.log("Model loaded successfully!");
-        });
-
+        
+        // This will pop up the name when you click a chair
         viewer.addEventListener('click', (event) => {
             const hit = viewer.materialFromPoint(event.clientX, event.clientY);
             if (hit) {
-                // This will finally show you the metadata!
-                alert("Object Detected! Internal Name: " + hit.name);
+                alert("Internal Name: " + hit.name);
             }
         });
-    </script>
 
+        // Listen for Grafana/Supabase data
+        window.addEventListener("message", (event) => {
+            if (event.data.action === 'color_update') {
+                const materials = viewer.model.materials;
+                const colorMap = {
+                    'GREEN': [0, 1, 0, 1],
+                    'YELLOW': [1, 0.8, 0, 1],
+                    'RED': [1, 0, 0, 1]
+                };
+                const chosenColor = colorMap[event.data.colorName] || [0.5, 0.5, 0.5, 1];
+
+                materials.forEach(mat => {
+                    // This searches for the chair materials
+                    if (mat.name.toLowerCase().includes('chair') || mat.name.toLowerCase().includes('fabric')) {
+                        mat.pbrMetallicRoughness.setBaseColorFactor(chosenColor);
+                    }
+                });
+            }
+        }, false);
+    </script>
 </body>
 </html>
