@@ -2,21 +2,19 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Digital Twin Dashboard</title>
+    <title>PhD Digital Twin - Live View</title>
     <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.4.0/model-viewer.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         body { margin: 0; background-color: #f4f4f4; }
         model-viewer { width: 100%; height: 98vh; }
-        
-        /* Styles the data bubbles */
         .HotspotAnnotation {
             background: #ffffff;
             border: 2px solid #007bff;
             border-radius: 6px;
             padding: 8px 12px;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: sans-serif;
             font-size: 13px;
-            color: #333;
             box-shadow: 0 4px 8px rgba(0,0,0,0.2);
         }
     </style>
@@ -28,34 +26,53 @@
         camera-controls 
         camera-target="auto auto auto" 
         shadow-intensity="1" 
-        ar 
-        ar-modes="webxr scene-viewer quick-look">
+        ar>
 
-        <button class="Hotspot" slot="hotspot-1" 
-                data-position="61.09183340064659m 226.4628581160205m 353.7156419179308m" 
-                data-normal="-1m 0m 0m">
-            <div id="data-a81758fffe0d6f08" class="HotspotAnnotation">
-                ID: ...6f08 <br> <b>Loading Data...</b>
-            </div>
+        <button class="Hotspot" slot="hotspot-1" data-position="61.09183340064659m 226.4628581160205m 353.7156419179308m" data-normal="-1m 0m 0m">
+            <div id="data-a81758fffe0d6f08" class="HotspotAnnotation">ID: ...6f08 <br> <b>Loading...</b></div>
         </button>
 
-        <button class="Hotspot" slot="hotspot-2" 
-                data-position="85.35421807809544m 242.5540850221417m 350.9062363462293m" 
-                data-normal="-1m 0m 0m">
-            <div id="data-a81758fffe0d6f2f" class="HotspotAnnotation">
-                ID: ...6f2f <br> <b>Loading Data...</b>
-            </div>
+        <button class="Hotspot" slot="hotspot-2" data-position="85.35421807809544m 242.5540850221417m 350.9062363462293m" data-normal="-1m 0m 0m">
+            <div id="data-a81758fffe0d6f2f" class="HotspotAnnotation">ID: ...6f2f <br> <b>Loading...</b></div>
         </button>
 
-        <button class="Hotspot" slot="hotspot-3" 
-                data-position="38.266051880778825m 240.2209602488366m 355.46939304757063m" 
-                data-normal="0m 0m 1m">
-            <div id="data-a81758fffe0d985c" class="HotspotAnnotation">
-                ID: ...985c <br> <b>Loading Data...</b>
-            </div>
+        <button class="Hotspot" slot="hotspot-3" data-position="38.266051880778825m 240.2209602488366m 355.46939304757063m" data-normal="0m 0m 1m">
+            <div id="data-a81758fffe0d985c" class="HotspotAnnotation">ID: ...985c <br> <b>Loading...</b></div>
         </button>
 
     </model-viewer>
 
+    <script>
+        // Supabase Configuration
+        const supabaseUrl = 'https://codbuvljesxjybhkvcit.supabase.co';
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNvZGJ1dmxqZXN4anliaGt2Y2l0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0NTU1OTEsImV4cCI6MjA5MDAzMTU5MX0.ScHKUG2VcFwCp5VS9x9oB6ZYSQ00cgZ2JoduRZ01Mpc';
+        const _supabase = supabase.createClient(supabaseUrl, supabaseKey);
+
+        async function updateData() {
+            console.log("Fetching new readings...");
+            
+            // IMPORTANT: Replace 'YOUR_TABLE_NAME' with your actual table name
+            const { data, error } = await _supabase
+                .from('sensors') 
+                .select('sensor_id, temperature')
+                .order('created_at', { ascending: false });
+
+            if (error) {
+                console.error("Error:", error.message);
+                return;
+            }
+
+            data.forEach(row => {
+                const element = document.getElementById(`data-${row.sensor_id}`);
+                if (element) {
+                    element.innerHTML = `ID: ...${row.sensor_id.slice(-4)} <br> <b>${row.temperature}°C</b>`;
+                }
+            });
+        }
+
+        // Run every 10 seconds
+        updateData();
+        setInterval(updateData, 10000);
+    </script>
 </body>
 </html>
