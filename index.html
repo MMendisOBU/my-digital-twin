@@ -44,5 +44,29 @@
             }
         }, false);
     </script>
+    const viewer = document.querySelector('#twin-model');
+
+viewer.addEventListener('load', () => {
+    // This looks at the RAW data structure, not just the visual materials
+    const scene = viewer.model.shapes; 
+    console.log("Deep Model Data:", viewer.model);
+    
+    // This logs every single internal ID to your console (F12)
+    viewer.model.materials.forEach((mat, index) => {
+        console.log(`Material ${index}: ${mat.name}`);
+    });
+});
+
+viewer.addEventListener('click', (event) => {
+    // This is the "Magic" function for BIM
+    const hit = viewer.materialFromPoint(event.clientX, event.clientY);
+    
+    if (hit) {
+        // We probe the 'backing' object for hidden IFC data
+        const deepData = hit.variantInfo || "No extra BIM data visible to this viewer";
+        alert("Surface Name: " + hit.name + "\nCheck Console (F12) for hidden IFC IDs!");
+        console.log("Clicked Object Raw Data:", hit);
+    }
+});
 </body>
 </html>
