@@ -29,21 +29,18 @@
     <model-viewer 
     src="model.glb" 
     camera-controls 
-    touch-action="pan-y"
+    camera-target="auto auto auto"
     
-    /* 1. STOPS THE FLIPPING: Limits vertical movement so you can't go under the floor */
+    /* 1. REMOVE auto-rotate from this list entirely */
+
+    /* 2. STOP THE FLIPPING (The Revit Lock) */
     min-camera-orbit="auto 0deg auto" 
     max-camera-orbit="auto 90deg auto" 
 
-    /* 2. FIXES THE CENTER: Ensures the building stays flat on the grid */
-    camera-target="0m 0m 0m"
+    /* 3. THE BRAKES: This stops the model the instant you let go of the mouse */
+    interpolation-decay="20" 
     
-    /* 3. ADDS STABILITY: Makes the movement feel heavy and professional */
-    interpolation-decay="200"
-    shadow-intensity="1"
-    
-    /* 4. OPTIONAL: Adds a floor shadow so it looks like it is sitting on a surface */
-    shadow-softness="1">
+    shadow-intensity="1">
 
     </model-viewer>
 
