@@ -3,16 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PhD Digital Twin - Live Dashboard</title>
+    <title>PhD Digital Twin - Coordinate Mapping</title>
     
     <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.4.0/model-viewer.min.js"></script>
-    
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
     <style>
-        body { margin: 0; background-color: #f4f4f4; font-family: sans-serif; }
-        model-viewer { width: 100%; height: 98vh; display: block; }
+        body { margin: 0; background-color: #f4f4f4; font-family: sans-serif; overflow: hidden; }
+        model-viewer { width: 100vw; height: 100vh; display: block; }
         
+        /* Tooltip Style */
         .HotspotAnnotation {
             background: #ffffff;
             border: 2px solid #007bff;
@@ -20,39 +20,56 @@
             padding: 8px;
             font-size: 11px;
             box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-            pointer-events: none; /* Keeps the label from blocking mouse clicks */
+            pointer-events: none;
+        }
+
+        /* Picker Overlay */
+        #picker-info {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.85);
+            color: #00ff00;
+            padding: 15px;
+            border-radius: 8px;
+            z-index: 100;
+            font-family: monospace;
+            border: 1px solid #444;
+            pointer-events: none;
         }
     </style>
 </head>
 <body>
 
+<div id="picker-info">
+    <strong>COORDINATE PICKER MODE</strong><br>
+    1. Rotate/Pan to your sensor location.<br>
+    2. Click the model surface.<br>
+    3. Copy the XYZ from below:<br>
+    <span id="coords-output" style="color: white;">Waiting for click...</span>
+</div>
+
 <model-viewer 
     id="twin-model"
-    src="your-model.glb" 
+    src="https://raw.githubusercontent.com/mmendisobu/my-digital-twin/main/your-model.glb" 
     camera-controls 
     interaction-prompt="none"
     min-camera-orbit="auto 0deg auto" 
-    max-camera-orbit="auto 90deg auto"
+    max-camera-orbit="auto 95deg auto"
     camera-target="auto auto auto"
     interpolation-decay="30"
     enable-pan
-    shadow-intensity="1"
-    style="width: 100%; height: 98vh;">
+    shadow-intensity="1">
 
-    <button class="Hotspot" slot="hotspot-1" data-position="0m 0m 0m" data-normal="0m 1m 0m">
-        <div id="data-a81758fffe0d6f08" class="HotspotAnnotation">Click to Map</div>
-    </button>
+    <button class="Hotspot" slot="hotspot-test" data-position="0m 0m 0m" data-normal="0m 1m 0m" style="width:10px; height:10px; background:red; border-radius:50%; border:none;"></button>
 
 </model-viewer>
 
-<div id="picker-info" style="position: absolute; bottom: 20px; left: 20px; background: #000; color: #fff; padding: 10px; border-radius: 5px; z-index: 100; font-family: monospace; font-size: 12px;">
-    Click model to get XYZ for Hotspots
-</div>
-
 <script>
     const mv = document.querySelector("#twin-model");
-    const info = document.querySelector("#picker-info");
+    const output = document.querySelector("#coords-output");
 
+    // 1. COORDINATE PICKER LOGIC
     mv.addEventListener("click", (ev) => {
         const rect = mv.getBoundingClientRect();
         const x = ev.clientX - rect.left;
@@ -61,52 +78,49 @@
         
         if (hit) {
             const pos = hit.position;
-            const text = `${pos.x.toFixed(2)}m ${pos.y.toFixed(2)}m ${pos.z.toFixed(2)}m`;
-            info.innerText = "Current Click: " + text;
-            console.log("Copy this to data-position:", text);
+            const coordString = `${pos.x.toFixed(2)}m ${pos.y.toFixed(2)}m ${pos.z.toFixed(2)}m`;
+            output.innerText = coordString;
+            console.log("Copied to Clipboard: " + coordString);
+            
+            // Auto-copy to clipboard for convenience
+            navigator.clipboard.writeText(coordString);
         }
     });
+
+    // 2. SUPABASE DATA LOGIC
+    const supabaseUrl = 'https://codbuvljesxjybhkvcit.supabase.co';
+    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNvZGJ1dmxqZXN4anliaGt2Y2l0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0NTU1OTEsImV4cCI6MjA5MDAzMTU5MX0.ScHKUG2VcFwCp5VS9x9oB6ZYSQ00cgZ2JoduRZ01Mpc';
+    const _supabase = supabase.createClient(supabaseUrl, supabaseKey);
+
+    async function updateDigitalTwin() {
+        try {
+            const { data, error } = await _supabase
+                .from('sensors') 
+                .select('sensor_id, temperature, humidity, co2, timestamp')
+                .order('timestamp', { ascending: false })
+                .limit(40);
+
+            if (error) throw error;
+
+            data.forEach(row => {
+                const element = document.getElementById(`data-${row.sensor_id}`);
+                if (element) {
+                    element.innerHTML = `
+                        <strong>ID: ${row.sensor_id.slice(-4)}</strong><br>
+                        Temp: ${row.temperature?.toFixed(1)}°C<br>
+                        Hum: ${row.humidity?.toFixed(1)}%<br>
+                        CO2: ${row.co2?.toFixed(0)} ppm
+                    `;
+                }
+            });
+        } catch (err) {
+            console.error("Supabase Error:", err.message);
+        }
+    }
+
+    setInterval(updateDigitalTwin, 15000);
+    updateDigitalTwin();
 </script>
 
-    <script>
-        const supabaseUrl = 'https://codbuvljesxjybhkvcit.supabase.co';
-        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNvZGJ1dmxqZXN4anliaGt2Y2l0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0NTU1OTEsImV4cCI6MjA5MDAzMTU5MX0.ScHKUG2VcFwCp5VS9x9oB6ZYSQ00cgZ2JoduRZ01Mpc';
-        
-        const _supabase = supabase.createClient(supabaseUrl, supabaseKey);
-
-        async function updateDigitalTwin() {
-            try {
-                const { data, error } = await _supabase
-                    .from('sensors') 
-                    .select('sensor_id, temperature, humidity, co2, timestamp')
-                    .order('timestamp', { ascending: false })
-                    .limit(20);
-
-                if (error) throw error;
-
-                const updatedSensors = new Set();
-
-                data.forEach(row => {
-                    if (!updatedSensors.has(row.sensor_id)) {
-                        const element = document.getElementById(`data-${row.sensor_id}`);
-                        if (element) {
-                            element.innerHTML = `
-                                <strong>ID: ${row.sensor_id.slice(-4)}</strong><br>
-                                Temp: ${row.temperature?.toFixed(1) || '--'}°C<br>
-                                Hum: ${row.humidity?.toFixed(1) || '--'}%<br>
-                                CO2: ${row.co2?.toFixed(0) || '--'} ppm
-                            `;
-                            updatedSensors.add(row.sensor_id);
-                        }
-                    }
-                });
-            } catch (err) {
-                console.error("Connection error:", err.message);
-            }
-        }
-
-        updateDigitalTwin();
-        setInterval(updateDigitalTwin, 15000);
-    </script>
 </body>
 </html>
