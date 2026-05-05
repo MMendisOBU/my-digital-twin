@@ -54,11 +54,21 @@
     src="https://cdn.jsdelivr.net/gh/MMendisOBU/my-digital-twin@main/model.glb" 
     camera-controls 
     interaction-prompt="none"
-    min-camera-orbit="auto 0deg auto" 
-    max-camera-orbit="auto 95deg auto"
+    
+    /* FIX 1: STOPS THE FLIPPING */
+    /* 0deg is looking straight down (Plan View). 90deg is looking at the side. */
+    /* This prevents the camera from going under the floor or past the top. */
+    min-polar-angle="0deg" 
+    max-polar-angle="90deg"
+    
+    /* FIX 2: STABILIZES THE ROTATION */
+    /* Forces the model to rotate around its own center, not the user's mouse. */
     camera-target="auto auto auto"
+    
+    /* FIX 3: SMOOTH NAVIGATION */
     interpolation-decay="30"
     enable-pan
+    
     shadow-intensity="1"
     style="width: 100vw; height: 100vh;">
 </model-viewer>
