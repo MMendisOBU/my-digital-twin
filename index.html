@@ -27,26 +27,46 @@
 <body>
 
 <model-viewer 
-    src="your-model.glb"
-    camera-controls
-    
-    /* 1. THE REVISIT STABILITY: Locks the floor at 0 degrees so you don't flip */
-    min-camera-orbit="auto 0deg auto"
-    max-camera-orbit="auto 90deg auto"
-    
-    /* 2. THE PIVOT: Set this to the center of your floor plan at height 0 */
-    /* If your model disappears, try "auto auto auto" first */
-    camera-target="0m 0m 0m" 
-    
-    /* 3. THE FEEL: Matches your trainer's smooth movement */
-    interpolation-decay="30"
-    
-    /* 4. ENABLE PANNING: Allows you to move across the rooms (Right Click / Two Fingers) */
-    enable-pan
-    
+    id="twin-model"
+    src="your-model.glb" 
+    camera-controls 
     interaction-prompt="none"
-    shadow-intensity="1">
+    min-camera-orbit="auto 0deg auto" 
+    max-camera-orbit="auto 90deg auto"
+    camera-target="auto auto auto"
+    interpolation-decay="30"
+    enable-pan
+    shadow-intensity="1"
+    style="width: 100%; height: 98vh;">
+
+    <button class="Hotspot" slot="hotspot-1" data-position="0m 0m 0m" data-normal="0m 1m 0m">
+        <div id="data-a81758fffe0d6f08" class="HotspotAnnotation">Click to Map</div>
+    </button>
+
 </model-viewer>
+
+<div id="picker-info" style="position: absolute; bottom: 20px; left: 20px; background: #000; color: #fff; padding: 10px; border-radius: 5px; z-index: 100; font-family: monospace; font-size: 12px;">
+    Click model to get XYZ for Hotspots
+</div>
+
+<script>
+    const mv = document.querySelector("#twin-model");
+    const info = document.querySelector("#picker-info");
+
+    mv.addEventListener("click", (ev) => {
+        const rect = mv.getBoundingClientRect();
+        const x = ev.clientX - rect.left;
+        const y = ev.clientY - rect.top;
+        const hit = mv.positionAndNormalFromPoint(x, y);
+        
+        if (hit) {
+            const pos = hit.position;
+            const text = `${pos.x.toFixed(2)}m ${pos.y.toFixed(2)}m ${pos.z.toFixed(2)}m`;
+            info.innerText = "Current Click: " + text;
+            console.log("Copy this to data-position:", text);
+        }
+    });
+</script>
 
     <script>
         const supabaseUrl = 'https://codbuvljesxjybhkvcit.supabase.co';
