@@ -12,7 +12,6 @@
         body { margin: 0; background-color: #f4f4f4; font-family: sans-serif; overflow: hidden; }
         model-viewer { width: 100vw; height: 100vh; display: block; }
         
-        /* Tooltip Style */
         .HotspotAnnotation {
             background: #ffffff;
             border: 2px solid #007bff;
@@ -23,7 +22,6 @@
             pointer-events: none;
         }
 
-        /* Picker Overlay */
         #picker-info {
             position: absolute;
             bottom: 20px;
@@ -43,9 +41,8 @@
 
 <div id="picker-info">
     <strong>COORDINATE PICKER MODE</strong><br>
-    1. Rotate/Pan to your sensor location.<br>
-    2. Click the model surface.<br>
-    3. Copy the XYZ from below:<br>
+    1. Right-Click + Drag to Pan.<br>
+    2. Click model to get XYZ.<br>
     <span id="coords-output" style="color: white;">Waiting for click...</span>
 </div>
 
@@ -54,23 +51,34 @@
     src="https://cdn.jsdelivr.net/gh/MMendisOBU/my-digital-twin@main/model.glb" 
     camera-controls 
     interaction-prompt="none"
-    
-    /* FIX 1: STOPS THE FLIPPING */
-    /* 0deg is looking straight down (Plan View). 90deg is looking at the side. */
-    /* This prevents the camera from going under the floor or past the top. */
     min-polar-angle="0deg" 
     max-polar-angle="90deg"
-    
-    /* FIX 2: STABILIZES THE ROTATION */
-    /* Forces the model to rotate around its own center, not the user's mouse. */
     camera-target="auto auto auto"
-    
-    /* FIX 3: SMOOTH NAVIGATION */
     interpolation-decay="30"
     enable-pan
-    
     shadow-intensity="1"
     style="width: 100vw; height: 100vh;">
+
+    <button class="Hotspot" slot="hotspot-1" data-position="70.25m 224.10m 351.23m" data-normal="0m 0m 1m">
+        <div class="HotspotAnnotation">2.02/01</div>
+    </button>
+    <button class="Hotspot" slot="hotspot-2" data-position="70.50m 219.37m 351.23m" data-normal="0m 0m 1m">
+        <div class="HotspotAnnotation">2.02/02</div>
+    </button>
+    <button class="Hotspot" slot="hotspot-3" data-position="70.51m 214.92m 351.16m" data-normal="0m 0m 1m">
+        <div class="HotspotAnnotation">2.02/03</div>
+    </button>
+
+    <button class="Hotspot" slot="hotspot-4" data-position="60.97m 226.59m 353.72m" data-normal="-1m 0m 0m">
+        <div id="data-S1" class="HotspotAnnotation">S1: Loading...</div>
+    </button>
+    <button class="Hotspot" slot="hotspot-5" data-position="38.53m 238.26m 353.87m" data-normal="1m 0m 0m">
+        <div id="data-S2" class="HotspotAnnotation">S2: Loading...</div>
+    </button>
+    <button class="Hotspot" slot="hotspot-6" data-position="85.36m 237.47m 352.29m" data-normal="-1m 0m 0m">
+        <div id="data-S3" class="HotspotAnnotation">S3: Loading...</div>
+    </button>
+
 </model-viewer>
 
 <script>
@@ -80,33 +88,25 @@
     // 1. COORDINATE PICKER LOGIC
     mv.addEventListener("click", (ev) => {
         const rect = mv.getBoundingClientRect();
-        const x = ev.clientX - rect.left;
-        const y = ev.clientY - rect.top;
-        const hit = mv.positionAndNormalFromPoint(x, y);
+        const hit = mv.positionAndNormalFromPoint(ev.clientX - rect.left, ev.clientY - rect.top);
         
         if (hit) {
-            const pos = hit.position;
-            const coordString = `${pos.x.toFixed(2)}m ${pos.y.toFixed(2)}m ${pos.z.toFixed(2)}m`;
+            const coordString = `${hit.position.x.toFixed(2)}m ${hit.position.y.toFixed(2)}m ${hit.position.z.toFixed(2)}m`;
             output.innerText = coordString;
-            console.log("Copied to Clipboard: " + coordString);
-            
-            // Auto-copy to clipboard for convenience
             navigator.clipboard.writeText(coordString);
         }
     });
 
     // 2. SUPABASE DATA LOGIC
-    const supabaseUrl = 'https://codbuvljesxjybhkvcit.supabase.co';
-    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNvZGJ1dmxqZXN4anliaGt2Y2l0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0NTU1OTEsImV4cCI6MjA5MDAzMTU5MX0.ScHKUG2VcFwCp5VS9x9oB6ZYSQ00cgZ2JoduRZ01Mpc';
-    const _supabase = supabase.createClient(supabaseUrl, supabaseKey);
+    const _supabase = supabase.createClient('https://codbuvljesxjybhkvcit.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNvZGJ1dmxqZXN4anliaGt2Y2l0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0NTU1OTEsImV4cCI6MjA5MDAzMTU5MX0.ScHKUG2VcFwCp5VS9x9oB6ZYSQ00cgZ2JoduRZ01Mpc');
 
     async function updateDigitalTwin() {
         try {
             const { data, error } = await _supabase
                 .from('sensors') 
-                .select('sensor_id, temperature, humidity, co2, timestamp')
+                .select('*')
                 .order('timestamp', { ascending: false })
-                .limit(40);
+                .limit(20);
 
             if (error) throw error;
 
@@ -114,7 +114,7 @@
                 const element = document.getElementById(`data-${row.sensor_id}`);
                 if (element) {
                     element.innerHTML = `
-                        <strong>ID: ${row.sensor_id.slice(-4)}</strong><br>
+                        <strong>ID: ${row.sensor_id}</strong><br>
                         Temp: ${row.temperature?.toFixed(1)}°C<br>
                         Hum: ${row.humidity?.toFixed(1)}%<br>
                         CO2: ${row.co2?.toFixed(0)} ppm
